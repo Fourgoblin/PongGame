@@ -8,6 +8,45 @@
 
 import socket
 import threading
+import sys
+from thread import *
+
+server = ""
+port = "5555"
+socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+    s.bind((server, port))
+except socket.error as e:
+    str(e)
+
+s.listen(2) #controls number of connections
+print('Waiting for connection, server started.')
+
+
+def threaded_client(connection):
+    reply = ""
+    while True:
+        try:
+            data = connection.recv(2048) #2048 is num of bits
+            reply = data.decode("utf-8")
+            
+            if not data:
+                print('Disconnected')
+                break
+            else:
+                print('Recieved: ', reply)
+                print('Sending: ', reply)
+            connection.sendall(str.encode(reply))
+        except:
+            break
+
+while True:
+    connection, address = socket.accept()
+    print("Connected to", address)
+
+    start_new_thread(threaded_client, (connection,))
+
 
 # Use this file to write your server logic
 # You will need to support at least two clients
