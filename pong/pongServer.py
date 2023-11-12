@@ -24,11 +24,12 @@ print('Waiting for connection...')
 
 
 cId = "0"
+ypos = [] * 2
 def Clients(connection):
-    global cId
+    global cId, ypos
     connection.send(str.encode(cId))
     reply = ''
-
+    
     while True:
         try:
             data = connection.recv(1024) #1024 is num of bits
@@ -39,14 +40,19 @@ def Clients(connection):
                 break
             else:
                 print('Recieved: ', reply)
+                ar = reply.split(":")
+                id = int(ar[0]) #id of client
+                ypos[id] = reply
                 
-                id = int(ar)
-                
+                if id == 0: #determine other player
+                    nid = 1
+                if id == 1:
+                    nid = 0
 
-                reply = pos[posi][:]
+                reply = ypos[nid][:]
 
 
-            connection.sendall(str.encode(reply))
+            connection.sendall(str.encode(reply)) #update all pos
         except:
             break
 
