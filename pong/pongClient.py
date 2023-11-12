@@ -11,6 +11,7 @@ import pygame
 import tkinter as tk
 import sys
 import socket
+import time
 
 from assets.code.helperCode import *
 
@@ -177,13 +178,17 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # You don't have to use SOCK_STREAM, use what you think is best
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     
-    add = [[ip], [port]]
+    #add = [[ip], [port]]
     try:
-        client.connect(add)
+        client.connect((ip, int(port)))
+        client.send("Hello".encode())
+        time.sleep(2)
         data =  client.recv(1024).decode()
-        int(data)
+        print(str(data))
+        #int(data)
     except:
-        pass
+       print(socket.error())
+        #pass
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
 
@@ -235,5 +240,5 @@ if __name__ == "__main__":
     # Uncomment the line below if you want to play the game without a server to see how it should work
     # the startScreen() function should call playGame with the arguments given to it by the server this is
     # here for demo purposes only
-    playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+    # playGame(640, 480,"left",socket.socket(socket.AF_INET, socket.SOCK_STREAM))
 

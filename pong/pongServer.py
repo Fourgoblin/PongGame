@@ -9,17 +9,20 @@
 import socket
 import threading
 import sys
+import time
 
-server = "10.47.78.1"
-port = "12321"
+server = '192.168.1.26'
+port = 12321
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    server.bind((server, port))
-except socket.error as e:
-    str(e)
+    socket.bind((server, port))
+#except socket.error as e:
+except:
+    #str(e)
+    print('fail"')
 
-server.listen(2) #controls number of connections
+socket.listen(2) #controls number of connections
 print('Waiting for connection...')
 
 
@@ -40,27 +43,35 @@ def Clients(connection):
                 break
             else:
                 print('Recieved: ', reply)
-                ar = reply.split(":")
-                id = int(ar[0]) #id of client
-                ypos[id] = reply
+                # ar = reply.split(":")
+                # id = int(ar[0]) #id of client
+                # ypos[id] = reply
                 
-                if id == 0: #determine other player
-                    nid = 1
-                if id == 1:
-                    nid = 0
+                # if id == 0: #determine other player
+                #     nid = 1
+                # if id == 1:
+                #     nid = 0
 
-                reply = ypos[nid][:]
+                #reply = ypos[nid][:]
 
 
             connection.sendall(str.encode(reply)) #update all pos
         except:
             break
+    
+    print('Connection closed')
+    connection.close()
 
 while True:
     connection, address = socket.accept()
     print("Connected to", address)
+    msg = connection.recv(1024).decode()          # Received message from client
+    print(f"Client sent: {msg}")
+    time.sleep(2)
+    connection.send(msg.encode())
 
-    threading.Thread(Clients, (connection,))
+    Clients(connection)
+    #threading.Thread(Clients, (connection,))
 
 
 # Use this file to write your server logic
