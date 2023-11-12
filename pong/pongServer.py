@@ -11,8 +11,8 @@ import threading
 import sys
 from thread import *
 
-server = ""
-port = "5555"
+server = "10.47.78.1"
+port = "12321"
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
@@ -21,7 +21,7 @@ except socket.error as e:
     str(e)
 
 s.listen(2) #controls number of connections
-print('Waiting for connection, server started.')
+print('Waiting for connection...')
 
 
 def threaded_client(connection):
@@ -45,7 +45,7 @@ while True:
     connection, address = socket.accept()
     print("Connected to", address)
 
-    start_new_thread(threaded_client, (connection,))
+    threading.Thread(threaded_client, (connection,))
 
 
 # Use this file to write your server logic
