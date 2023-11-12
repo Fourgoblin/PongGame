@@ -9,26 +9,29 @@
 import socket
 import threading
 import sys
-from thread import *
 
 server = "10.47.78.1"
 port = "12321"
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
-    s.bind((server, port))
+    server.bind((server, port))
 except socket.error as e:
     str(e)
 
-s.listen(2) #controls number of connections
+server.listen(2) #controls number of connections
 print('Waiting for connection...')
 
 
-def threaded_client(connection):
-    reply = ""
+cId = "0"
+def Clients(connection):
+    global cId
+    connection.send(str.encode(cId))
+    reply = ''
+
     while True:
         try:
-            data = connection.recv(2048) #2048 is num of bits
+            data = connection.recv(1024) #1024 is num of bits
             reply = data.decode("utf-8")
             
             if not data:
@@ -36,7 +39,13 @@ def threaded_client(connection):
                 break
             else:
                 print('Recieved: ', reply)
-                print('Sending: ', reply)
+                
+                id = int(ar)
+                
+
+                reply = pos[posi][:]
+
+
             connection.sendall(str.encode(reply))
         except:
             break
@@ -45,7 +54,7 @@ while True:
     connection, address = socket.accept()
     print("Connected to", address)
 
-    threading.Thread(threaded_client, (connection,))
+    threading.Thread(Clients, (connection,))
 
 
 # Use this file to write your server logic
@@ -54,5 +63,3 @@ while True:
 # for each player and where the ball is, and relay that to each client
 # I suggest you use the sync variable in pongClient.py to determine how out of sync your two
 # clients are and take actions to resync the games
-
-#test upload
