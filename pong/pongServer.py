@@ -30,20 +30,21 @@ cId = "0"
 ypos = [] * 2
 def Clients(connection):
     global cId, ypos
-    connection.send(str.encode(cId))
+    connection.send(str.encode(cId)) #tells first connection what its id is
+    cId = "1" #sets id to 1 so that second connection will have correct id number
     reply = ''
-    
     while True:
         try:
             data = connection.recv(1024) #1024 is num of bits
             reply = data.decode("utf-8")
+
             
             if not data:
                 print('Disconnected')
                 break
             else:
-                print('Recieved: ', reply)
-                # ar = reply.split(":")
+                print('Recieved: ', reply) #will be in form [id, sinc, ypos, clock, score]
+                # ar = reply.split(":") #reply is string separated by :, split turns it into array based off of colons
                 # id = int(ar[0]) #id of client
                 # ypos[id] = reply
                 

@@ -13,6 +13,9 @@ import sys
 import socket
 import time
 
+setWidth = 640 #constant for screen width
+setHeight = 480 #constant for screen height
+
 from assets.code.helperCode import *
 
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
@@ -183,9 +186,21 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
         client.connect((ip, int(port)))
         client.send("Hello".encode())
         time.sleep(2)
-        data =  client.recv(1024).decode()
+        data =  client.recv(1024).decode() #currently recieving hello message from server
         print(str(data))
-        #int(data)
+        ID =  client.recv(1024).decode() #recieving ID number from server
+        ID = int(ID) #converts ID number to an integer
+        side = ""
+        if ID == 0:
+            side = "left"
+        elif ID == 1:
+            side = "right"
+        else: #add spectator
+            pass
+        app.withdraw()
+        playGame(setWidth,setHeight,side,socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+        app.quit()
+      
     except:
        print(socket.error())
         #pass
