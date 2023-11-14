@@ -12,7 +12,6 @@ import tkinter as tk
 import sys
 import socket
 import time
-import select
 
 setWidth = 640 #constant for screen width
 setHeight = 480 #constant for screen height
@@ -170,7 +169,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 # the screen width, height and player paddle (either "left" or "right")
 # If you want to hard code the screen's dimensions into the code, that's fine, but you will need to know
 # which client is which
-waitmsg = "Waiting"
 def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     # Purpose:      This method is fired when the join button is clicked
     # Arguments:
@@ -193,28 +191,12 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
         ID =  client.recv(1024).decode() #recieving ID number from server
         ID = int(ID) #converts ID number to an integer
         side = ""
-        print(f"this is the ID for test", ID)
         if ID == 0:
             side = "left"
         elif ID == 1:
             side = "right"
         else: #add spectator
             pass
-        pl = False
-        while pl == False:
-            errorLabel.config(text=f'Waiting for the other player to connect')
-            #client.send(str.encode(waitmsg))
-            time.sleep(1)
-            ready = select.select([client], [], [], 1)
-            if ready[0]:
-                recMsg = client.recv(1024).decode()
-            if recMsg == "ready":
-                pl = True
-            else:
-                pass
-
-        
-
         #startData = client.recv(1024).decode() #gets data from server to know if both players are connected
         #while startData == "wait":
          #   errorLabel.config(text=f'Waiting for the other player to connect')
