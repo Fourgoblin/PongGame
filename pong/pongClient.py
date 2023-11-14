@@ -184,10 +184,10 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
     #add = [[ip], [port]]
     try:
         client.connect((ip, int(port)))
-        client.send("Hello".encode())
+        #client.send("Hello".encode())
         time.sleep(2)
-        data =  client.recv(1024).decode() #currently recieving hello message from server
-        print(str(data))
+        # data =  client.recv(1024).decode() #currently recieving hello message from server
+        # print(str(data))
         ID =  client.recv(1024).decode() #recieving ID number from server
         ID = int(ID) #converts ID number to an integer
         side = ""
@@ -197,9 +197,14 @@ def joinServer(ip:str, port:str, errorLabel:tk.Label, app:tk.Tk) -> None:
             side = "right"
         else: #add spectator
             pass
+        #startData = client.recv(1024).decode() #gets data from server to know if both players are connected
+        #while startData == "wait":
+         #   errorLabel.config(text=f'Waiting for the other player to connect')
+         #   startData = client.recv(1024).decode()
+
         app.withdraw()
         playGame(setWidth,setHeight,side,socket.socket(socket.AF_INET, socket.SOCK_STREAM))
-        app.quit()
+        #app.quit()
       
     except:
        print(socket.error())

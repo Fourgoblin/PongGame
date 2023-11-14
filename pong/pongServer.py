@@ -6,6 +6,10 @@
 # Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
 
+# 11/13 comment, goals for tomorrow: 
+# game start syncronization (use a player count variable to ensure both are connectd?)
+# sending data (position, clock, score, id) from server to client and vice versa
+
 import socket
 import threading
 import sys
@@ -13,67 +17,52 @@ import time
 
 server = '192.168.1.26'
 port = 12321
-socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #changed from socket to sock to avoid possible keyword
 
 try:
-    socket.bind((server, port))
-#except socket.error as e:
+    sock.bind((server, port))
 except:
-    #str(e)
-    print('fail"')
+    print('Failed to bind socket')
 
-socket.listen(2) #controls number of connections
-print('Waiting for connection...')
+sock.listen(2)  # Controls the number of connections
+print('Waiting for connections...')
+
+clientList = []  # List to keep track of connected clients
 
 
-cId = "0"
-ypos = [] * 2
-def Clients(connection):
-    global cId, ypos
-    connection.send(str.encode(cId)) #tells first connection what its id is
-    cId = "1" #sets id to 1 so that second connection will have correct id number
+#ypos = [] * 2
+def clientHandler(connection, cId):
+    global clientList
+    connection.send(str.encode(str(cId)))  #tells first connection what its id is
     reply = ''
     while True:
         try:
             data = connection.recv(1024) #1024 is num of bits
-            reply = data.decode("utf-8")
+            reply = data.decode("utf-8") #reply is string separated by :, split turns it into array based off of colons
 
-            
             if not data:
                 print('Disconnected')
                 break
             else:
-                print('Recieved: ', reply) #will be in form [id, sinc, ypos, clock, score]
-                # ar = reply.split(":") #reply is string separated by :, split turns it into array based off of colons
-                # id = int(ar[0]) #id of client
-                # ypos[id] = reply
-                
-                # if id == 0: #determine other player
-                #     nid = 1
-                # if id == 1:
-                #     nid = 0
-
-                #reply = ypos[nid][:]
-
-
-            connection.sendall(str.encode(reply)) #update all pos
+                print(f'Received from Client {cId}: {reply}') #will be in form [id, sinc, ypos, clock, score]
+            
+            connection.sendall(str.encode(reply))
         except:
             break
     
-    print('Connection closed')
+    print(f'Connection with client {cId} closed')
     connection.close()
+    clientList[cId] = None  # Set the client slot to None
 
+cId = 0
 while True:
-    connection, address = socket.accept()
-    print("Connected to", address)
-    msg = connection.recv(1024).decode()          # Received message from client
-    print(f"Client sent: {msg}")
-    time.sleep(2)
-    connection.send(msg.encode())
+    connection, address = sock.accept()
+    print(f"Connected to {address}")
+    clientList.append(connection)  # Add the new connection to the list
+    clientThread = threading.Thread(target=clientHandler, args=(connection, cId))
+    clientThread.start()
 
-    Clients(connection)
-    #threading.Thread(Clients, (connection,))
-
+    cId += 1
 
 # Use this file to write your server logic
 # You will need to support at least two clients
