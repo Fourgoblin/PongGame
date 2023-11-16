@@ -162,7 +162,17 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
-        dataList = [cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+        sendMove = 0
+        if opponentPaddleObj.moving == 'Up':
+            sendMove = 1
+        elif opponentPaddleObj.moving == 'Down':
+            sendMove = 2
+        else:
+            sendMove= 0
+        dataList = [cId, sync, sendMove, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+        #may still need to include the player location and moving in the case that the data received is its own
+        #if it recieves its own data back, does it need to update at all????
+        
         try:
             #print(dataList)
             gameData = pickle.dumps(dataList)
@@ -174,25 +184,43 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         
 
         try:       
-            #dataList = [ID, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+            #added no update if ID match, opponent moving, 
+            #still need to add player send 
+            #dataList = [ID, sync, opponentPaddleObj.moving opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
             incomeData = client.recv(1024)
             updateData = pickle.loads(incomeData)
-            sync = updateData[1]
-            if cId != updateData[0]:
-                hold = updateData[2]
-                playerPaddleObj.rect.y = updateData[3]
-                opponentPaddleObj.rect.y = hold
-            else:
-                playerPaddleObj.rect.y = updateData[2]
+            if updateData[0] != cId:
+                updateMove = 0
+                if updateData[2] == 'Up':
+                    updateMove = 1
+                elif updateData[2] == 'Down':
+                    updateMove = 2
+                else:
+                    updateMove = 0
+
+                sync = updateData[1]
+            # else:
+                if updateMove == 1:
+                    opponentPaddleObj.moving = 'Up'
+                elif updateMove == 2:
+                    opponentPaddleObj.moving = 'Down'
+                elif updateMove == 0:
+                    opponentPaddleObj.moving = ''
                 opponentPaddleObj.rect.y = updateData[3]
-            ball.rect.x = updateData[4]
-            ball.rect.y = updateData[5]
-            ball.xVel = updateData[6]
-            ball.yVel = updateData[7]
-            lScore = updateData[8]
-            rScore = updateData[9]
+                ball.rect.x = updateData[4]
+                ball.rect.y = updateData[5]
+                ball.xVel = updateData[6]
+                ball.yVel = updateData[7]
+                lScore = updateData[8]
+                rScore = updateData[9]
+                # if cId != updateData[0]:
+                #     hold = updateData[2]
+                #     playerPaddleObj.rect.y = updateData[3]
+                #     opponentPaddleObj.rect.y = hold
+            else:
+                pass
         except:
-           pass
+            pass
         # =========================================================================================
 
 
