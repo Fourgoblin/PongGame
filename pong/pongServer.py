@@ -30,9 +30,9 @@ print('Waiting for connections...')
 clientList = []  # List to keep track of connected clients
 
 #[cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+#[cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 
-
-info = [[0 for i in range(10)] for j in range(2)]
+info = [[0 for i in range(12)] for j in range(2)]
 threadLock = threading.Lock()
 def clientHandler(connection, cId):
     global clientList, info, threadLock
@@ -47,16 +47,19 @@ def clientHandler(connection, cId):
             gameData = connection.recv(1024) #1024 is num of bits
             dataList = pickle.loads(gameData)
             #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
+#[cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 
             if not gameData:
                 print('Disconnected')
                 break
             else:
-                threadLock.acquire()
+                #threadLock.acquire()
                 if dataList[0] == 0:
                     #threadLock.acquire()
+                    dataList[4] = info[1][2]
+                    dataList[5] = info[1][3]
                     info[0] = dataList
-                    print(info[1])
+                    print(info[0], info[1])
                     
                     if info[0][1] > info[1][1]:
                         gameData = pickle.dumps(dataList)
@@ -69,6 +72,9 @@ def clientHandler(connection, cId):
                     #threadLock.release()
                 elif dataList[0] == 1:
                     #threadLock.acquire()
+                    dataList[4] = info[0][2]
+                    dataList[5] = info[0][3]
+                    print(info)
                     info[1] = dataList
                     if info[1][1] > info[0][1]:
                         gameData = pickle.dumps(dataList)
@@ -78,7 +84,7 @@ def clientHandler(connection, cId):
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     
-                threadLock.release()
+                #threadLock.release()
                 #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
             
             #connection.sendall(str.encode(dataList))
