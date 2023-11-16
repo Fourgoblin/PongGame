@@ -25,7 +25,7 @@ from assets.code.helperCode import *
 def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket, cId:int) -> None:
     
     # Pygame inits
-    pygame.mixer.pre_init(44100, -16, 2, 2048)
+    pygame.mixer.pre_init(44100, -16, 2, 1024)
     pygame.init()
 
     # Constants
@@ -89,7 +89,6 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
         # Things to send: ID, sync, Paddle positions, ball pos and vel, score, clock*
-            #send id playerPaddleObj.rect.y
        
         
         # =========================================================================================
@@ -165,12 +164,13 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
         dataList = [cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
         try:
-            print(dataList)
+            #print(dataList)
             gameData = pickle.dumps(dataList)
             client.sendall(gameData)
-            print('working!')
+            #print('working!')
         except:
-            print('not working!')
+            #print('not working!')
+            break
         
 
         try:       

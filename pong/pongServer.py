@@ -6,9 +6,7 @@
 # Misc:                     <Not Required.  Anything else you might want to include>
 # =================================================================================================
 
-# 11/13 comment, goals for tomorrow: 
-# game start syncronization (use a player count variable to ensure both are connectd?)
-# sending data (position, clock, score, id) from server to client and vice versa
+
 
 import socket
 import threading
@@ -35,10 +33,10 @@ clientList = []  # List to keep track of connected clients
 
 
 info = [[0 for i in range(10)] for j in range(2)]
+threadLock = threading.Lock()
 def clientHandler(connection, cId):
-    global clientList, info
+    global clientList, info, threadLock
     connection.send(str.encode(str(cId)))  #tells first connection what its id is
-    #dataList = ''
 
     if len(clientList) == 2:
         connection.sendall(str.encode("start"))
@@ -48,40 +46,39 @@ def clientHandler(connection, cId):
         try:
             gameData = connection.recv(1024) #1024 is num of bits
             dataList = pickle.loads(gameData)
-            print(dataList)
             #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
 
             if not gameData:
                 print('Disconnected')
-                print('error1')
                 break
             else:
+                threadLock.acquire()
                 if dataList[0] == 0:
+                    #threadLock.acquire()
                     info[0] = dataList
                     print(info[1])
                     
                     if info[0][1] > info[1][1]:
-                        print('error2')
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     else:
-                        print('error3')
                         dataList = info[1]
                         print(dataList)
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
+                    #threadLock.release()
                 elif dataList[0] == 1:
-                    print('error4')
+                    #threadLock.acquire()
                     info[1] = dataList
                     if info[1][1] > info[0][1]:
-                        print('error5')
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     else:
-                        print('error6')
                         dataList = info[0]
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
+                    
+                threadLock.release()
                 #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
             
             #connection.sendall(str.encode(dataList))
