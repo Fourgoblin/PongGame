@@ -14,6 +14,8 @@ import socket
 import threading
 import sys
 import time
+import pickle
+import pygame
 
 server = '192.168.1.26'
 port = 12321
@@ -29,12 +31,14 @@ print('Waiting for connections...')
 
 clientList = []  # List to keep track of connected clients
 
+#[cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 
-#ypos = [] * 2
+
+info = [[0 for i in range(10)] for j in range(2)]
 def clientHandler(connection, cId):
-    global clientList
+    global clientList, info
     connection.send(str.encode(str(cId)))  #tells first connection what its id is
-    reply = ''
+    #dataList = ''
 
     if len(clientList) == 2:
         connection.sendall(str.encode("start"))
@@ -42,17 +46,47 @@ def clientHandler(connection, cId):
         connection.sendall(str.encode("wait"))
     while True:
         try:
-            data = connection.recv(1024) #1024 is num of bits
-            reply = data.decode("utf-8") #reply is string separated by :, split turns it into array based off of colons
+            gameData = connection.recv(1024) #1024 is num of bits
+            dataList = pickle.loads(gameData)
+            print(dataList)
+            #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
 
-            if not data:
+            if not gameData:
                 print('Disconnected')
+                print('error1')
                 break
             else:
-                print(f'Received from Client {cId}: {reply}') #will be in form [id, sinc, ypos, clock, score]
+                if dataList[0] == 0:
+                    info[0] = dataList
+                    print(info[1])
+                    
+                    if info[0][1] > info[1][1]:
+                        print('error2')
+                        gameData = pickle.dumps(dataList)
+                        connection.sendall(gameData)
+                    else:
+                        print('error3')
+                        dataList = info[1]
+                        print(dataList)
+                        gameData = pickle.dumps(dataList)
+                        connection.sendall(gameData)
+                elif dataList[0] == 1:
+                    print('error4')
+                    info[1] = dataList
+                    if info[1][1] > info[0][1]:
+                        print('error5')
+                        gameData = pickle.dumps(dataList)
+                        connection.sendall(gameData)
+                    else:
+                        print('error6')
+                        dataList = info[0]
+                        gameData = pickle.dumps(dataList)
+                        connection.sendall(gameData)
+                #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
             
-            connection.sendall(str.encode(reply))
-        except:
+            #connection.sendall(str.encode(dataList))
+        except connection as e:
+            print(e)
             break
     
     print(f'Connection with client {cId} closed')

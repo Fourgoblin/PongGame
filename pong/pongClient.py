@@ -22,7 +22,7 @@ from assets.code.helperCode import *
 # This is the main game loop.  For the most part, you will not need to modify this.  The sections
 # where you should add to the code are marked.  Feel free to change any part of this project
 # to suit your needs.
-def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket) -> None:
+def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.socket, cId:int) -> None:
     
     # Pygame inits
     pygame.mixer.pre_init(44100, -16, 2, 2048)
@@ -88,7 +88,9 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Your code here to send an update to the server on your paddle's information,
         # where the ball is and the current score.
         # Feel free to change when the score is updated to suit your needs/requirements
+        # Things to send: ID, sync, Paddle positions, ball pos and vel, score, clock*
             #send id playerPaddleObj.rect.y
+       
         
         # =========================================================================================
 
@@ -161,6 +163,36 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
+        dataList = [cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+        try:
+            print(dataList)
+            gameData = pickle.dumps(dataList)
+            client.sendall(gameData)
+            print('working!')
+        except:
+            print('not working!')
+        
+
+        try:       
+            #dataList = [ID, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
+            incomeData = client.recv(1024)
+            updateData = pickle.loads(incomeData)
+            sync = updateData[1]
+            if cId != updateData[0]:
+                hold = updateData[2]
+                playerPaddleObj.rect.y = updateData[3]
+                opponentPaddleObj.rect.y = hold
+            else:
+                playerPaddleObj.rect.y = updateData[2]
+                opponentPaddleObj.rect.y = updateData[3]
+            ball.rect.x = updateData[4]
+            ball.rect.y = updateData[5]
+            ball.xVel = updateData[6]
+            ball.yVel = updateData[7]
+            lScore = updateData[8]
+            rScore = updateData[9]
+        except:
+           pass
         # =========================================================================================
 
 
@@ -197,7 +229,7 @@ def joinServer(ip: str, port: str, errorLabel: tk.Label, app: tk.Tk) -> None:
 
         app.withdraw()
 
-        playGame(setWidth, setHeight, side, client)
+        playGame(setWidth, setHeight, side, client, ID)
 
     except:
         pass
