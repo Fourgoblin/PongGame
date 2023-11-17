@@ -108,6 +108,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             textRect = textSurface.get_rect()
             textRect.center = ((screenWidth/2), screenHeight/2)
             screen.blit(textSurface, textRect)
+            time.sleep(2)
+            return
         else:
 
             # ==== Ball Logic =====================================================================
@@ -267,17 +269,14 @@ def joinServer(ip: str, port: str, errorLabel: tk.Label, app: tk.Tk) -> None:
 
         playGame(setWidth, setHeight, side, client, ID)
 
+        app.quit()
+        client.close()
+
     except:
         pass
         #print(socket.error())
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
-
-
-    # If you have messages you'd like to show the user use the errorLabel widget like so
-    errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
-    # You may or may not need to call this, depending on how many times you update the label
-    errorLabel.update()     
 
     # Close this window and start the game with the info passed to you from the server
     #app.withdraw()     # Hides the window (we'll kill it later)

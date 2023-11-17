@@ -15,9 +15,11 @@ import time
 import pickle
 import pygame
 
-server = '192.168.1.26'
+server = "localhost"   #'192.168.1.26'
 port = 12321
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #changed from socket to sock to avoid possible keyword
+
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 try:
     sock.bind((server, port))
@@ -34,7 +36,7 @@ clientList = []  # List to keep track of connected clients
 
 info = [[0 for i in range(12)] for j in range(2)]
 threadLock = threading.Lock()
-def clientHandler(connection, cId):
+def clientHandler(connection: socket.socket, cId: int) -> None:
     global clientList, info, threadLock
     connection.send(str.encode(str(cId)))  #tells first connection what its id is
 
@@ -44,7 +46,7 @@ def clientHandler(connection, cId):
         connection.sendall(str.encode("wait"))
     while True:
         try:
-            gameData = connection.recv(256) #1024 is num of bits
+            gameData = connection.recv(256) #256 is num of bits
             dataList = pickle.loads(gameData)
             #if dataList
             #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
@@ -89,7 +91,7 @@ def clientHandler(connection, cId):
                 #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
             
             #connection.sendall(str.encode(dataList))
-        except connection as e:
+        except connection as e: #connection has ended
             print(e)
             break
     
@@ -97,7 +99,7 @@ def clientHandler(connection, cId):
     connection.close()
     clientList[cId] = None  # Set the client slot to None
 
-def server():
+def server()-> None:
     cId = 0
     threadList = []
     while True:
