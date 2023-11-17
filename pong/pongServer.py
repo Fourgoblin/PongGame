@@ -44,8 +44,9 @@ def clientHandler(connection, cId):
         connection.sendall(str.encode("wait"))
     while True:
         try:
-            gameData = connection.recv(1024) #1024 is num of bits
+            gameData = connection.recv(256) #1024 is num of bits
             dataList = pickle.loads(gameData)
+            #if dataList
             #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
 #[cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 
@@ -53,7 +54,7 @@ def clientHandler(connection, cId):
                 print('Disconnected')
                 break
             else:
-                #threadLock.acquire()
+                threadLock.acquire()
                 if dataList[0] == 0:
                     #threadLock.acquire()
                     dataList[4] = info[1][2]
@@ -84,7 +85,7 @@ def clientHandler(connection, cId):
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     
-                #threadLock.release()
+                threadLock.release()
                 #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
             
             #connection.sendall(str.encode(dataList))
@@ -96,19 +97,29 @@ def clientHandler(connection, cId):
     connection.close()
     clientList[cId] = None  # Set the client slot to None
 
-cId = 0
-while True:
-    connection, address = sock.accept()
-    print(f"Connected to {address}")
-    clientList.append(connection)  # Add the new connection to the list
-    clientThread = threading.Thread(target=clientHandler, args=(connection, cId))
-    clientThread.start()
+def server():
+    cId = 0
+    threadList = []
+    while True:
+        connection, address = sock.accept()
+        print(f"Connected to {address}")
+        clientList.append(connection)  # Add the new connection to the list
+        clientThread = threading.Thread(target=clientHandler, args=(connection, cId))
+        threadList.append(clientThread)  # Add the new thread to the list
+        clientThread.start()
 
-    cId += 1
+        cId += 1
 
-    if len(clientList) == 2:
-        for client in clientList:
-            client.sendall(str.encode("start"))
+        if len(clientList) == 2:
+            for client in clientList:
+                client.sendall(str.encode("start"))
+            break
+    sock.close()
+    for thread in threadList:
+        thread.join()
+
+if __name__ == "__main__":
+    server()
 
 # Use this file to write your server logic
 # You will need to support at least two clients
