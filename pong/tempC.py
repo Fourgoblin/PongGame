@@ -208,7 +208,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
 
                 opponentPaddleObj.moving = plUpdateMove
                 
-                opponentPaddleObj.rect.y = updateData[4]
+                opponentPaddleObj.rect.y = updateData[2]
                 ball.rect.x = updateData[6]
                 ball.rect.y = updateData[7]
                 ball.xVel = updateData[8]
