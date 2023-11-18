@@ -103,8 +103,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             textRect = textSurface.get_rect()
             textRect.center = ((screenWidth/2), screenHeight/2)
             screen.blit(textSurface, textRect)
-            time.sleep(2)
-            return
+            
         else:
 
             # ==== Ball Logic =====================================================================
