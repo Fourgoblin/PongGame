@@ -1,10 +1,9 @@
-
 # =================================================================================================
-# Contributing Authors:	    <Anyone who touched the code>
-# Email Addresses:          <Your uky.edu email addresses>
-# Date:                     <The date the file was last edited>
-# Purpose:                  <How this file contributes to the project>
-# Misc:                     <Not Required.  Anything else you might want to include>
+# Contributing Authors:	    Mark Richter, Andrew Mortimer
+# Email Addresses:          meri231@uky.edu, aamo231@uky.edu
+# Date:                     11/17/2023
+# Purpose:                  This file acts to run the pong game, and to update any information related to it.
+#                           Receives information from the other client from the server, and updates accordingly.                            
 # =================================================================================================
 
 import pygame
@@ -85,12 +84,7 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
                 playerPaddleObj.moving = ""
 
         # =========================================================================================
-        # Your code here to send an update to the server on your paddle's information,
-        # where the ball is and the current score.
-        # Feel free to change when the score is updated to suit your needs/requirements
-        # Things to send: ID, sync, Paddle positions, ball pos and vel, score, clock*
-       
-        
+        # We did all of the sending and receiving of information at the end of the loop
         # =========================================================================================
 
         # Update the player paddle and opponent paddle's location on the screen
@@ -109,6 +103,8 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
             textRect = textSurface.get_rect()
             textRect.center = ((screenWidth/2), screenHeight/2)
             screen.blit(textSurface, textRect)
+            time.sleep(2)
+            return
         else:
 
             # ==== Ball Logic =====================================================================
@@ -162,65 +158,60 @@ def playGame(screenWidth:int, screenHeight:int, playerPaddle:str, client:socket.
         # Send your server update here at the end of the game loop to sync your game with your
         # opponent's game
 
-        sendMove = 0
-        if opponentPaddleObj.moving == 'Up':
-            sendMove = 1
-        elif opponentPaddleObj.moving == 'Down':
-            sendMove = 2
-        else:
-            sendMove= 0
-        dataList = [cId, sync, sendMove, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
-        #may still need to include the player location and moving in the case that the data received is its own
-        #if it recieves its own data back, does it need to update at all????
+        playSendMove = 0
+        oppSendMove = 0
+        if playerPaddleObj.moving == "up": #encode the string for movement as an integer before sending
+            playSendMove = 1
+        elif playerPaddleObj.moving == "down":
+            playSendMove = 2
+       
+        if opponentPaddleObj.moving == "up":
+            oppSendMove = 1
+        elif opponentPaddleObj.moving == "down":
+            oppSendMove = 2
+        #all of the information being sent to the server is a list of integers
+        dataList = [cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore] 
         
         try:
-            #print(dataList)
-            gameData = pickle.dumps(dataList)
+            gameData = pickle.dumps(dataList) #pickle to encode the data
             client.sendall(gameData)
-            #print('working!')
         except:
-            #print('not working!')
             break
         
 
         try:       
-            #added no update if ID match, opponent moving, 
-            #still need to add player send 
-            #dataList = [ID, sync, opponentPaddleObj.moving opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
             incomeData = client.recv(1024)
-            updateData = pickle.loads(incomeData)
-            if updateData[0] != cId:
-                updateMove = 0
-                if updateData[2] == 'Up':
-                    updateMove = 1
-                elif updateData[2] == 'Down':
-                    updateMove = 2
-                else:
-                    updateMove = 0
+            updateData = pickle.loads(incomeData) #receive and decode the data from server, will be from higher of the two sync variables
+            plUpdateMove = 0
+            if updateData[5] == 1:
+                plUpdateMove = "up"
+            elif updateData[5] == 2:
+                plUpdateMove = "down"
+            elif updateData[5] == 0:
+                plUpdateMove = ""
+
+            if updateData[0] != cId: #update all of the information from the server to the player's based of ID
 
                 sync = updateData[1]
-            # else:
-                if updateMove == 1:
-                    opponentPaddleObj.moving = 'Up'
-                elif updateMove == 2:
-                    opponentPaddleObj.moving = 'Down'
-                elif updateMove == 0:
-                    opponentPaddleObj.moving = ''
-                opponentPaddleObj.rect.y = updateData[3]
-                ball.rect.x = updateData[4]
-                ball.rect.y = updateData[5]
-                ball.xVel = updateData[6]
-                ball.yVel = updateData[7]
-                lScore = updateData[8]
-                rScore = updateData[9]
-                # if cId != updateData[0]:
-                #     hold = updateData[2]
-                #     playerPaddleObj.rect.y = updateData[3]
-                #     opponentPaddleObj.rect.y = hold
+
+                opponentPaddleObj.moving = plUpdateMove
+                opponentPaddleObj.rect.y = updateData[2]
+                ball.rect.x = updateData[6]
+                ball.rect.y = updateData[7]
+                ball.xVel = updateData[8]
+                ball.yVel = updateData[9]
+                lScore = updateData[10]
+                rScore = updateData[11]
             else:
-                pass
+                opponentPaddleObj.rect.y = updateData[4]
+                opponentPaddleObj.moving = plUpdateMove
+                ball.rect.x = updateData[6]
+                ball.rect.y = updateData[7]
+                ball.xVel = updateData[8]
+                ball.yVel = updateData[9]
         except:
-            pass
+            break
+  
         # =========================================================================================
 
 
@@ -259,17 +250,14 @@ def joinServer(ip: str, port: str, errorLabel: tk.Label, app: tk.Tk) -> None:
 
         playGame(setWidth, setHeight, side, client, ID)
 
+        app.quit()
+        client.close()
+
     except:
         pass
         #print(socket.error())
 
     # Get the required information from your server (screen width, height & player paddle, "left or "right)
-
-
-    # If you have messages you'd like to show the user use the errorLabel widget like so
-    errorLabel.config(text=f"Some update text. You input: IP: {ip}, Port: {port}")
-    # You may or may not need to call this, depending on how many times you update the label
-    errorLabel.update()     
 
     # Close this window and start the game with the info passed to you from the server
     #app.withdraw()     # Hides the window (we'll kill it later)

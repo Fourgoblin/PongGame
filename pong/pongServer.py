@@ -1,12 +1,10 @@
 # =================================================================================================
-# Contributing Authors:	    <Anyone who touched the code>
-# Email Addresses:          <Your uky.edu email addresses>
-# Date:                     <The date the file was last edited>
-# Purpose:                  <How this file contributes to the project>
-# Misc:                     <Not Required.  Anything else you might want to include>
+# Contributing Authors:	    Mark Richter, Andrew Mortimer
+# Email Addresses:          meri231@uky.edu, aamo231@uky.edu
+# Date:                     11/17/2023
+# Purpose:                  The file manages connections between clients, and acts to relay information between them.
+# Misc:                     Runs into issues when ran on the same machine as a client.
 # =================================================================================================
-
-
 
 import socket
 import threading
@@ -15,11 +13,11 @@ import time
 import pickle
 import pygame
 
-server = "localhost"   #'192.168.1.26'
+server = '192.168.1.26' #IP address; must match the current wifi's IP address
 port = 12321
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #changed from socket to sock to avoid possible keyword
 
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 try:
     sock.bind((server, port))
@@ -31,10 +29,9 @@ print('Waiting for connections...')
 
 clientList = []  # List to keep track of connected clients
 
-#[cId, sync, playerPaddleObj.rect.y, opponentPaddleObj.rect.y, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
-#[cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
-
 info = [[0 for i in range(12)] for j in range(2)]
+# How information is layed out for sending and receiving:
+# [cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 threadLock = threading.Lock()
 def clientHandler(connection: socket.socket, cId: int) -> None:
     global clientList, info, threadLock
@@ -46,38 +43,33 @@ def clientHandler(connection: socket.socket, cId: int) -> None:
         connection.sendall(str.encode("wait"))
     while True:
         try:
-            gameData = connection.recv(256) #256 is num of bits
+            gameData = connection.recv(256) #256 is num of bits sent and received
             dataList = pickle.loads(gameData)
-            #if dataList
-            #dataList = data.decode("utf-8") #dataList is string separated by :, split turns it into array based off of colons
-#[cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 
             if not gameData:
                 print('Disconnected')
                 break
             else:
-                threadLock.acquire()
-                if dataList[0] == 0:
-                    #threadLock.acquire()
-                    dataList[4] = info[1][2]
+                threadLock.acquire() #Threads will be accessing shared data so make sure to lock
+                if dataList[0] == 0: #check id
+                    dataList[4] = info[1][2] #only the player will be updating the global knowledge of their own paddle
                     dataList[5] = info[1][3]
                     info[0] = dataList
-                    print(info[0], info[1])
+                    #print(info[0], info[1])
                     
-                    if info[0][1] > info[1][1]:
+                    if info[0][1] > info[1][1]: #sends the information based off of the higher sync variable
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     else:
                         dataList = info[1]
-                        print(dataList)
+                        
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
-                    #threadLock.release()
-                elif dataList[0] == 1:
-                    #threadLock.acquire()
+                    
+                elif dataList[0] == 1: #same as above except for other player
                     dataList[4] = info[0][2]
                     dataList[5] = info[0][3]
-                    print(info)
+                    #print(info)
                     info[1] = dataList
                     if info[1][1] > info[0][1]:
                         gameData = pickle.dumps(dataList)
@@ -87,15 +79,12 @@ def clientHandler(connection: socket.socket, cId: int) -> None:
                         gameData = pickle.dumps(dataList)
                         connection.sendall(gameData)
                     
-                threadLock.release()
-                #print(f'Received from Client {cId}: {dataList}') #will be in form [id, sinc, ypos, clock, score]
-            
-            #connection.sendall(str.encode(dataList))
-        except connection as e: #connection has ended
-            print(e)
+                threadLock.release() #Release the lock so other threads can access the shared data
+                
+        except: 
             break
     
-    print(f'Connection with client {cId} closed')
+    print(f'Connection with client {cId} closed') #client closed connection
     connection.close()
     clientList[cId] = None  # Set the client slot to None
 
@@ -112,15 +101,16 @@ def server()-> None:
 
         cId += 1
 
-        if len(clientList) == 2:
+        if len(clientList) == 2: #Waits for there to be two clients connected before allowing them to start the game
             for client in clientList:
                 client.sendall(str.encode("start"))
             break
-    sock.close()
+    
+    sock.close() #game has finished, close connections and join threads
     for thread in threadList:
         thread.join()
 
-if __name__ == "__main__":
+if __name__ == "__main__": #Thread protection
     server()
 
 # Use this file to write your server logic
