@@ -33,6 +33,17 @@ info = [[0 for i in range(12)] for j in range(2)]
 # How information is layed out for sending and receiving:
 # [cId, sync, playerPaddleObj.rect.y, playSendMove, opponentPaddleObj.rect.y, oppSendMove, ball.rect.x, ball.rect.y, ball.xVel, ball.yVel, lScore, rScore]
 threadLock = threading.Lock()
+
+# =================================================================================================
+# Author:        Mark Richter and Andrew Mortimer (We each helped eachother with each part of this project, no one part is solely one of ours)
+# Purpose:       This method works with a thread for each client. It acts as a relay between the clients by sending each other the other one's data
+# based off of whoever has the larger sync.
+# Pre:           This method expects there to be two clients connected before telling them to start the game. Once the game starts, it expects to be constantly receiving
+# the game state data from each client.
+# Post:          After each loop inside the function, each client should have an updated game state based off of whichever client has the larger sync value.
+# Once the function finishes, it breaks the connection with its client and returns to the server function for the rest of it to be closed.
+
+# =================================================================================================
 def clientHandler(connection: socket.socket, cId: int) -> None:
     global clientList, info, threadLock
     connection.send(str.encode(str(cId)))  #tells first connection what its id is
@@ -87,6 +98,16 @@ def clientHandler(connection: socket.socket, cId: int) -> None:
     print(f'Connection with client {cId} closed') #client closed connection
     connection.close()
     clientList[cId] = None  # Set the client slot to None
+
+# =================================================================================================
+# Author:        Mark Richter and Andrew Mortimer
+# Purpose:       This method looks to make connections with clients, and to start a thread for each. It waits for two connections before
+# having each start the game and handle their respective client. Once the game is finished, it closes connections and joins the threads
+# Pre:           #This method expects to be called by the main process at the start of its run.
+# Post:          After this method is finished, the game will have finished running, connections will be closed, and the threads will have been joined
+# =================================================================================================
+
+
 
 def server()-> None:
     cId = 0
